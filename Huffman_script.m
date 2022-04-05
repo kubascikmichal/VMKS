@@ -62,5 +62,19 @@ for i=1:1:256
 end
 
 
+function outCell = twoCellsToOne(cellFirst, cellSecond)
+    outCell = [cellFirst; cellSecond];
+end
 
-
+function sortedCellVector = sortCellVector(cellVector) 
+    for i=1:1:size(cellVector)
+       for j=1:1:size(cellVector)-i
+             if (cellVector{j+1,1,1} < cellVector{j,1,1})
+                tmp = cellVector{j+1,1,1};
+                cellVector{j+1,:,:} = cellVector{j,:,:};
+                cellVector{j,:,:} = tmp;
+             end
+       end
+    end
+      sortedCellVector = cellVector;
+end
