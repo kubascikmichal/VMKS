@@ -18,49 +18,18 @@ for i=1:1:x
     end
 end
 
-counts_sorted_R = (zeros(256,2));
-counts_sorted_G = (zeros(256,2));
-counts_sorted_B = (zeros(256,2));
+counts_sorted_R = (cell(256,1,2));
+counts_sorted_G = (cell(256,1,2));
+counts_sorted_B = (cell(256,1,2));
 
 for i=1:1:256
-        counts_sorted_R(i,1) = i;
-        counts_sorted_R(i,2) = counts_R(i);
-        counts_sorted_G(i,1) = i;
-        counts_sorted_G(i,2) = counts_G(i);
-        counts_sorted_B(i,1) = i;
-        counts_sorted_B(i,2) = counts_B(i);
+        counts_sorted_R(i,1,1) = i;
+        counts_sorted_R(i,1,2) = counts_R(i);
+        counts_sorted_G(i,1,1) = i;
+        counts_sorted_G(i,1,2) = counts_G(i);
+        counts_sorted_B(i,1,1) = i;
+        counts_sorted_B(i,1,2) = counts_B(i);
 end
-
-%sorting
-for i=1:1:256
-    for j=1:1:256-i
-        if(counts_sorted_R(j+1,2) < counts_sorted_R(j,2))
-            tmp = counts_sorted_R(j+1,2);
-            counts_sorted_R(j+1,2) = counts_sorted_R(j,2);
-            counts_sorted_R(j,2) = tmp;
-            tmp = counts_sorted_R(j+1,1);
-            counts_sorted_R(j+1,1) = counts_sorted_R(j,1);
-            counts_sorted_R(j,1) = tmp;
-        end
-        if(counts_sorted_G(j+1,2) < counts_sorted_G(j,2))
-            tmp = counts_sorted_G(j,2);
-            counts_sorted_G(j,2) = counts_sorted_G(j+1,2);
-            counts_sorted_G(j+1,2) = tmp;
-            tmp = counts_sorted_G(j,1);
-            counts_sorted_G(j,1) = counts_sorted_G(j+1,1);
-            counts_sorted_G(j+1,1) = tmp;
-        end
-        if(counts_sorted_B(j+1,2) < counts_sorted_B(j,2))
-            tmp = counts_sorted_B(j,2);
-            counts_sorted_B(j,2) = counts_sorted_B(j+1,2);
-            counts_sorted_B(j+1,2) = tmp;
-            tmp = counts_sorted_B(j,1);
-            counts_sorted_B(j,1) = counts_sorted_B(j+1,1);
-            counts_sorted_B(j+1,1) = tmp;
-        end
-    end
-end
-
 
 function outCell = twoCellsToOne(cellFirst, cellSecond)
     outCell = [cellFirst; cellSecond];
