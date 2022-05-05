@@ -152,12 +152,12 @@ function ret_zigzag = make_zigzag(data)
             index = index+1;
         end 
     end
-    for i=2:1:y-1
+    for i=2:1:y
         for j=1:1:y-i
             if(mod(i,2) == 1)
-                ret_zigzag(index) = data(j, y-i+1);
+                ret_zigzag(index) = data(y-j, j);
             else
-                ret_zigzag(index) = data(y-i+1, j);
+                ret_zigzag(index) = data(j, y-j);
             end
             index = index+1;
         end 
