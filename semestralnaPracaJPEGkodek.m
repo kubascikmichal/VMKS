@@ -1,8 +1,9 @@
 clear all;
 
 data = imread("lena160x160.jpg","jpeg");
-GetSize("lena160x160.jpg");
-
+data2 = imread("eigenface.bmp", "bmp");
+getByteSize(data);
+getByteSize(data2);
 [x,y,z] = size(data);
 [Y, Cb, Cr] = make_YCbCr(data);
 [Cb, Cr] = make_compr420(Cb, Cr);
@@ -12,6 +13,7 @@ GetSize("lena160x160.jpg");
 [Y_v, Cb_v, Cr_v] = make_zig_zag(Y_bl, Cb_bl, Cr_bl);
 [Y_v_r, Cb_v_r, Cr_v_r] = make_RLE(Y_v, Cb_v, Cr_v);
 [Y_c, Cb_c, Cr_c, tree_Y, tree_Cb, tree_Cr] = make_Huffman(Y_v_r, Cb_v_r, Cr_v_r, Y_v, Cb_v, Cr_v);
+getByteSize(Y_c)/8 + getByteSize(Cb_c)/8 + getByteSize(Cr_c)/8
 [Y_ih, Cb_ih, Cr_ih] = make_invHuffman(Y_c, Cb_c, Cr_c, tree_Y{1,1}, tree_Cb{1,1}, tree_Cr{1,1});
 [Y_iz, Cb_iz, Cr_iz] = make_invzig_zag(Y_ih, Cb_ih, Cr_ih);
 [Y_iz, Cb_iz, Cr_iz] = make_invkvant(Y_iz, Cb_iz, Cr_iz);
@@ -22,7 +24,7 @@ imshow(uint8(make_invYCbCr(Y, Cb, Cr)));
 figure;
 imshow(uint8(make_invYCbCr(Yn, Cbn, Crn)));
 
-
+%YCbCr
 function [r_Y, r_Cb, r_Cr] = make_YCbCr(data)
 Kr = 0.299;
 Kg = 0.587;
@@ -41,6 +43,7 @@ for i=1:1:x
 end
 end
 
+%iYCbCr
 function picture = make_invYCbCr(Y, Cb, Cr)
 Kr = 0.299;
 Kg = 0.587;
@@ -56,6 +59,7 @@ for i=1:1:x
 end
 end
 
+%420
 function [r_Cb, r_Cr] = make_compr420(Cb, Cr)
 [x,y] = size(Cb);
 r_Cb = zeros(x,y);
@@ -446,7 +450,6 @@ for i=1:2:size(Cr_v_r,2)
         end
     end
 end
-%koniec Tabulka pocetnosti
 
 c_v_c_Y = num2cell(v_c_Y);
 c_v_c_Cb = num2cell(v_c_Cb);
@@ -459,7 +462,7 @@ i_Cb = v_c_c_Cb-1;
 i_Cr = v_c_c_Cr-1;
 
 while c_v_c_Y{2,2} > 0  || c_v_c_Cb{2,2} > 0 || c_v_c_Cr{2,2} > 0
-for repeat=1:1:v_c_c_Y                % usporiadanieR
+for repeat=1:1:v_c_c_Y                
     for b=1:1:v_c_c_Y-1
         if c_v_c_Y{2,b} < c_v_c_Y{2,b+1}
        value =  c_v_c_Y{2,b};
@@ -472,7 +475,7 @@ for repeat=1:1:v_c_c_Y                % usporiadanieR
     end
 end
 
-for repeat=1:1:v_c_c_Cb                % usporiadanieG
+for repeat=1:1:v_c_c_Cb               
     for b=1:1:v_c_c_Cb-1
         if c_v_c_Cb{2,b} < c_v_c_Cb{2,b+1}
        value =  c_v_c_Cb{2,b};
@@ -485,7 +488,7 @@ for repeat=1:1:v_c_c_Cb                % usporiadanieG
     end
 end
 
-for repeat=1:1:v_c_c_Cr                % usporiadanieB
+for repeat=1:1:v_c_c_Cr                
     for b=1:1:v_c_c_Cr-1
         if c_v_c_Cr{2,b} < c_v_c_Cr{2,b+1}
        value =  c_v_c_Cr{2,b};
@@ -498,12 +501,7 @@ for repeat=1:1:v_c_c_Cr                % usporiadanieB
     end
 end
 
-clear value;
-
-
-%koniec Usporiadanie
-
-if(c_v_c_Y{2,2} > 0)  %pre R
+if(c_v_c_Y{2,2} > 0)
 newCellR = cell(3,2);
 newCellR(1,1) = c_v_c_Y(1,i_Y);
 newCellR(2,1) = c_v_c_Y(2,i_Y);
@@ -521,7 +519,7 @@ c_v_c_Y(1,i_Y) = {0};
 i_Y = i_Y-1;
 end
         
-if(c_v_c_Cb{2,2} > 0)            %pre G
+if(c_v_c_Cb{2,2} > 0)
 newCellG = cell(2);
 newCellG(1,1) = c_v_c_Cb(1,i_Cb);
 newCellG(2,1) = c_v_c_Cb(2,i_Cb);
@@ -538,7 +536,7 @@ i_Cb = i_Cb-1;
 end
 
 
-if(c_v_c_Cr{2,2} > 0)            %preB
+if(c_v_c_Cr{2,2} > 0)            
 newCellB = cell(2);
 newCellB(1,1) = c_v_c_Cr(1,i_Cr);
 newCellB(2,1) = c_v_c_Cr(2,i_Cr);
@@ -557,16 +555,15 @@ end
 
 
 %spustenie rekurzie pre vztvorenie tabulky
-t_Y = containers.Map('KeyType','double','ValueType','char'); %tabulka koncova s klucom na kodovanie
+t_Y = containers.Map('KeyType','double','ValueType','char');
 recursion(t_Y,c_v_c_Y{1,1},"");
-ahoj = keys(t_Y);
-ahoj2 = values(t_Y);
-t_Cb = containers.Map('KeyType','double','ValueType','char'); %tabulka koncova s klucom na kodovanie
+
+t_Cb = containers.Map('KeyType','double','ValueType','char');
 recursion(t_Cb,c_v_c_Cb{1,1},"");
-t_Cr = containers.Map('KeyType','double','ValueType','char'); %tabulka koncova s klucom na kodovanie
+t_Cr = containers.Map('KeyType','double','ValueType','char');
 recursion(t_Cr,c_v_c_Cr{1,1},"");
-%koniec spustenie rekurzie pre vztvorenie tabulky
-%zakodovanie pomocou klucov do vystupneho vektoru
+
+%zakodovanie
 Y_code = "";
 Cb_code = "";
 Cr_code = "";
@@ -583,7 +580,6 @@ end
 Y_code = char(Y_code);
 Cb_code = char(Cb_code);
 Cr_code = char(Cr_code);
-%koniec zakodovanie pomocou klucov do vystupneho vektoru
 end
 
 function [Y, Cb, Cr] = make_invHuffman(Y_code, Cb_code, Cr_code, tree_Y,tree_Cb, tree_Cr)
@@ -652,7 +648,7 @@ end
 
 end
 
-%reccursion
+%generovanie kodov
 function recursion(table,uzol,sekvence) 
 sekvence1 = sekvence + "1";
     if size(uzol{1,1}) == 1
@@ -666,4 +662,98 @@ sekvence1 = sekvence + "1";
     else
         recursion(table,uzol{1,2},sekvence0);
     end
+end
+
+%velkosti 
+function ByteSize(in, fid)
+% BYTESIZE writes the memory usage of the provide variable to the given file
+% identifier. Output is written to screen if fid is 1, empty or not provided.
+
+if nargin == 1 || isempty(fid)
+    fid = 1;
+end
+
+s = whos('in');
+fprintf(fid,[Bytes2str(s.bytes) '\n']);
+end
+
+function str = Bytes2str(NumBytes)
+% BYTES2STR Private function to take integer bytes and convert it to
+% scale-appropriate size.
+
+scale = floor(log(NumBytes)/log(1024));
+switch scale
+    case 0
+        str = [sprintf('%.0f',NumBytes) ' b'];
+    case 1
+        str = [sprintf('%.2f',NumBytes/(1024)) ' kb'];
+    case 2
+        str = [sprintf('%.2f',NumBytes/(1024^2)) ' Mb'];
+    case 3
+        str = [sprintf('%.2f',NumBytes/(1024^3)) ' Gb'];
+    case 4
+        str = [sprintf('%.2f',NumBytes/(1024^4)) ' Tb'];
+    case -inf
+        % Size occasionally returned as zero (eg some Java objects).
+        str = 'Not Available';
+    otherwise
+       str = 'Over a petabyte!!!';
+end
+end
+
+function b = getByteSize(theVariable, returnType, fid)
+% getByteSize returns the mem.usage of the provided variable(theVariable) to the given file
+% identifier. 
+% returnType is assigned meaningfully according to the byte size if not stated
+% Output is written to screen if fid is 1, empty or not provided.
+s = whos('theVariable');
+b = s.bytes;
+if nargin == 1 || isempty(returnType)
+    scale = floor(log(b)/log(1024));
+    switch scale
+        case 0
+            returnType = 'byte';
+        case 1
+            returnType = 'kb';
+        case 2
+            returnType = 'mb';
+        case 3
+            returnType = 'gb';
+        case 4
+            returnType = 'tb';
+        case -inf
+            % Size occasionally returned as zero (eg some Java objects).
+            returnType = 'byte';
+            warning('Size occasionally returned as zero (eg some Java objects). Bytes assumed');
+        otherwise
+            returnType = 'petabytes';
+            warning('Over 1024 petabyte. petabytes assumed');
+    end
+end
+switch returnType
+    case {'b','byte','bytes'}
+        b = s.bytes;
+    case {'kb','kbs','kilobyte','kilobytes'}
+        b = b / 1024;
+    case {'mb','mbs','megabyte','megabytes'}
+        b = b / 1024^2;
+    case {'gb','gbs','gigabyte','gigabytes'}
+        b = b / 1024^3;
+    case {'tb','tbs','terabyte','terabytes'}
+        b = b / 1024^4;
+    case {'pb','pbs','petabyte','petabytes'}
+        b = b / 1024^5;
+    otherwise
+        returnType = 'bytes';
+end
+if nargin <= 2 || isempty(fid) || fid == 1
+    fprintf(1,[num2str(b) ' ' returnType '\n']);
+elseif nargin > 2 && ~isempty(fid) && fid > 2
+    try
+        fprintf(fid,[num2str(b) ' ' returnType '\n']);
+    catch
+        warning(['fid(' num2str(fid) ') could not be edited. Hence the output will be written on the screen.']);
+        fprintf(1,[num2str(b) ' ' returnType '\n']);
+    end
+end
 end
