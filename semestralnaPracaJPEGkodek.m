@@ -9,8 +9,8 @@ data = imread("lena160x160.jpg");
 [Y_v, Cb_v, Cr_v] = make_zig_zag(Y_bl, Cb_bl, Cr_bl);
 [Y_v_r, Cb_v_r, Cr_v_r] = make_RLE(Y_v, Cb_v, Cr_v);
 [Y_c, Cb_c, Cr_c, tree_Y, tree_Cb, tree_Cr] = make_Huffman(Y_v_r, Cb_v_r, Cr_v_r, Y_v, Cb_v, Cr_v);
-[Y_ih, Cb_ih, Cr_ih] = make_invHuffman(Y_c, Cb_c, Cr_c, tree_Y, tree_Cb, tree_Cr);
-[Y_iz, Cb_iz, Cr_iz] = make_invzig_zag(Y_v, Cb_v, Cr_v);
+[Y_ih, Cb_ih, Cr_ih] = make_invHuffman(Y_c, Cb_c, Cr_c, tree_Y{1,1}, tree_Cb{1,1}, tree_Cr{1,1});
+[Y_iz, Cb_iz, Cr_iz] = make_invzig_zag(Y_ih, Cb_ih, Cr_ih);
 [Y_iz, Cb_iz, Cr_iz] = make_invkvant(Y_iz, Cb_iz, Cr_iz);
 [Y_idct, Cb_idct, Cr_idct] = make_invDCT(Y_iz, Cb_iz, Cr_iz);
 [Yn, Cbn, Crn] = make_invblocks8x8(Y_idct, Cb_idct, Cr_idct);
@@ -577,9 +577,9 @@ for i=1:1:size(Cr_v,2)-1
 Cr_code = Cr_code + t_Cr(Cr_v(i)) ;
 end
 
-Y_code = convertStringsToChars(Y_code);
-Cb_code = convertStringsToChars(Cb_code);
-Cr_code = convertStringsToChars(Cr_code);
+Y_code = char(Y_code);
+Cb_code = char(Cb_code);
+Cr_code = char(Cr_code);
 %koniec zakodovanie pomocou klucov do vystupneho vektoru
 end
 
