@@ -8,9 +8,16 @@ data = imread("lena160x160.jpg");
 [Y_bl, Cb_bl, Cr_bl] = make_kvant(Y_bl, Cb_bl, Cr_bl);
 [Y_v, Cb_v, Cr_v] = make_zig_zag(Y_bl, Cb_bl, Cr_bl);
 [Y_v_r, Cb_v_r, Cr_v_r] = make_RLE(Y_v, Cb_v, Cr_v);
-[Y_c, Cb_c, Cr_c] = make_Huffman(Y_v_r, Cb_v_r, Cr_v_r, Y_v, Cb_v, Cr_v);
+%[Y_c, Cb_c, Cr_c, tree_Y, tree_Cb, tree_Cr] = make_Huffman(Y_v_r, Cb_v_r, Cr_v_r, Y_v, Cb_v, Cr_v);
+%[Y_ih, Cb_ih, Cr_ih] = make_invHuffman(Y_c, Cb_c, Cr_c, tree_Y, tree_Cb, tree_Cr);
+[Y_iz, Cb_iz, Cr_iz] = make_invzig_zag(Y_v, Cb_v, Cr_v);
+[Y_iz, Cb_iz, Cr_iz] = make_invkvant(Y_iz, Cb_iz, Cr_iz);
+[Y_idct, Cb_idct, Cr_idct] = make_invDCT(Y_iz, Cb_iz, Cr_iz);
+[Yn, Cbn, Crn] = make_invblocks8x8(Y_idct, Cb_idct, Cr_idct);
+figure;
 imshow(uint8(make_invYCbCr(Y, Cb, Cr)));
-
+figure;
+imshow(uint8(make_invYCbCr(Yn, Cbn, Crn)));
 
 
 function [r_Y, r_Cb, r_Cr] = make_YCbCr(data)
@@ -86,6 +93,29 @@ counter=1;
     end
 end
 
+function [Y, Cb, Cr] = make_invblocks8x8(Y_bl, Cb_bl, Cr_bl)
+[x1, y1, z1] = size(Y_bl);
+[x2, y2, z2] = size(Cb_bl);
+[x3, y3, z3] = size(Cr_bl);
+minimum = min([z1, z2, z3]);
+Y=zeros(round(sqrt(minimum*64)),round(sqrt(minimum*64)));
+Cb=zeros(round(sqrt(minimum*64)),round(sqrt(minimum*64)));
+Cr=zeros(round(sqrt(minimum*64)),round(sqrt(minimum*64)));
+c=1;
+    for a=1:8:round(sqrt(minimum))*8
+        for b=1:8:round(sqrt(minimum))*8  
+            for e=1:1:8
+                for f=1:1:8
+                Y(e+a-1,f+b-1) = Y_bl(e,f,c);
+                Cb(e+a-1,f+b-1) = Cb_bl(e,f,c);
+                Cr(e+a-1,f+b-1) = Cr_bl(e,f,c) ;
+                end
+            end
+            c = c+1;
+        end
+    end
+end
+
 function [Y_bl, Cb_bl, Cr_bl] = make_DCT(Y_bl, Cb_bl, Cr_bl)
 [x,y,z] = size(Y_bl);
 Y_dct = zeros(1,8);
@@ -113,6 +143,49 @@ for i=1:1:z
 end
 end
 
+function [Y_idct, Cb_idct, Cr_idct] = make_invDCT(Y_iz, Cb_iz, Cr_iz) 
+    vector_Y = zeros(1,8);
+    vector_Cb = zeros(1,8);
+    vector_Cr = zeros(1,8);
+    [x1, y1, z1] = size(Y_iz);
+    [x2, y2, z2] = size(Cb_iz);
+    [x3, y3, z3] = size(Cr_iz);
+    z = min([z1, z2, z3]);
+    N = 8;
+    for i=1:1:z
+        for j=1:1:8
+            for k = 1:1:8 
+                vector_Y(k) = (1/2)*Y_iz(j,1,i);
+                vector_Cr(k) = (1/2)*Cb_iz(j,1,i);
+                vector_Cb(k) = (1/2)*Cr_iz(j,1,i);
+                for n = 2:1:8
+                    sumR = Y_iz(j,n,i)*cos((pi/N)*((k-1)+(1/2))*(n-1));
+                    vector_Y(k) = vector_Y(k) + sumR;
+    
+                    sumG = Cb_iz(j,n,i)*cos((pi/N)*((k-1)+(1/2))*(n-1));
+                    vector_Cr(k) = vector_Cr(k) + sumG;
+    
+                    sumB = Cr_iz(j,n,i)*cos((pi/N)*((k-1)+(1/2))*(n-1));
+                    vector_Cb(k) = vector_Cb(k) + sumB;
+                end
+                vector_Y(k) = vector_Y(k)/(N/2);
+                vector_Cr(k) = vector_Cr(k)/(N/2);
+                vector_Cb(k) = vector_Cb(k)/(N/2);
+            end
+            Y_iz(j,:,i) = vector_Y(:);
+            Cb_iz(j,:,i) = vector_Cr(:);
+            Cr_iz(j,:,i) = vector_Cb(:);
+            
+            vector_Y = zeros(1,8);
+            vector_Cb = zeros(1,8);
+            vector_Cr = zeros(1,8);
+        end
+    end
+    Y_idct = Y_iz;
+    Cb_idct = Cb_iz;
+    Cr_idct = Cr_iz;
+end
+
 function [Y_bl, Cb_bl, Cr_bl] = make_kvant(Y_bl, Cb_bl, Cr_bl)
 [x,y,z] = size(Y_bl);
 div_Y = [ 16 11 10 16 24 40 51 61;
@@ -138,6 +211,38 @@ for i=1:1:z
         Y_bl(j,k,i) = round(Y_bl(j,k,i)/div_Y(j,k));
         Cb_bl(j,k,i) = round(Cb_bl(j,k,i)/div_CbCr(j,k));
         Cr_bl(j,k,i) = round(Cr_bl(j,k,i)/div_CbCr(j,k));
+        end
+    end
+end
+end
+
+function [Y_invk, Cb_invk, Cr_invk] = make_invkvant(Y_iz, Cb_iz, Cr_iz)
+Y_invk = zeros(size(Y_iz,1),size(Y_iz,2), size(Y_iz,3));
+Cb_invk = zeros(size(Cb_iz,1),size(Cb_iz,2), size(Cb_iz,3));
+Cr_invk = zeros(size(Cr_iz,1),size(Cr_iz,2), size(Cr_iz,3));
+div_Y = [ 16 11 10 16 24 40 51 61;
+    12 12 14 19 26 58 60 55;
+    14,13,16 24 40 57 69 56;
+    14 17 22 29 51 87 80 62;
+    18 22 37 56 68 109 103 77;
+    24 35 55 64 81 104 113 92;
+    49 64 78 87 103 121 120 101;
+    72 92 95 98 112 100 103 99];
+div_CbCr = [17 18 24 47 99 99 99 99;
+      18 21 26 66 99 99 99 99;
+      24 26 56 99 99 99 99 99;
+      47 66 99 99 99 99 99 99;
+      99 99 99 99 99 99 99 99;
+      99 99 99 99 99 99 99 99;
+      99 99 99 99 99 99 99 99;
+      99 99 99 99 99 99 99 99];
+
+for i=1:1:(size(Y_iz,3))
+    for j=1:1:8
+        for k=1:1:8
+        Y_invk(j,k,i) = Y_iz(j,k,i)*div_Y(j,k);
+        Cb_invk(j,k,i) = Cb_iz(j,k,i)*div_CbCr(j,k);
+        Cr_invk(j,k,i) = Cr_iz(j,k,i)*div_CbCr(j,k);
         end
     end
 end
@@ -183,7 +288,43 @@ for j=1:1:z
 end
 end
 
-function ret_data = make_invzig_zag(data)
+function [Y_iz, Cb_iz, Cr_iz] = make_invzig_zag(Y_ih, Cb_ih, Cr_ih)
+Y_iz = zeros(8,8,round(size(Y_ih,2)/64));
+Y_iz_c = 1;
+Cb_iz = zeros(8,8,round(size(Cb_ih,2)/64));
+Cb_iz_c = 1;
+Cr_iz = zeros(8,8,round(size(Cr_ih,2)/64));
+Cr_iz_c = 1;
+y = min([size(Y_ih,2),size(Cb_ih,2),size(Cr_ih,2)])
+for j=1:1:y/64
+    for i=1:1:15
+        for l = 1:1:i
+        k = i - l + 1;
+        modulo = mod(i,2);
+            if l<=8 && k <= 8
+                if modulo == 1
+                Y_iz(k,l,j) =  Y_ih(1,Y_iz_c);
+                Y_iz_c = Y_iz_c +1;
+                
+                Cb_iz(k,l,j) = Cb_ih(1,Cb_iz_c); 
+                Cb_iz_c = Cb_iz_c +1;
+                
+                Cr_iz(k,l,j) =  Cr_ih(1,Cr_iz_c); 
+                Cr_iz_c = Cr_iz_c +1;
+                else
+                Y_iz(l,k,j) = Y_ih(1,Y_iz_c);
+                Y_iz_c = Y_iz_c +1;
+
+                Cb_iz(l,k,j) = Cb_ih(1,Cb_iz_c);
+                Cb_iz_c = Cb_iz_c +1;
+
+                Cr_iz(l,k,j) = Cr_ih(1,Cr_iz_c);
+                Cr_iz_c = Cr_iz_c +1;
+                end
+            end
+        end
+    end
+end
 end
 
 function [Y_v_r, Cb_v_r, Cr_v_r] = make_RLE(Y_v, Cb_v, Cr_v)
@@ -247,7 +388,7 @@ Cr_v_r(last_index+1) = count;
 
 end
 
-function [Y_code, Cb_code, Cr_code] = make_Huffman(Y_v_r, Cb_v_r, Cr_v_r, Y_v, Cb_v, Cr_v)
+function [Y_code, Cb_code, Cr_code, c_v_c_Y, c_v_c_Cb, c_v_c_Cr] = make_Huffman(Y_v_r, Cb_v_r, Cr_v_r, Y_v, Cb_v, Cr_v)
 %Tabulka pocetnosti
 v_c_Y = zeros(2,size(Y_v_r,2));
 v_c_c_Y = 2;
@@ -435,24 +576,91 @@ end
 for i=1:1:size(Cr_v,2)-1
 Cr_code = Cr_code + t_Cr(Cr_v(i)) ;
 end
+
+Y_code = convertStringsToChars(Y_code);
+Cb_code = convertStringsToChars(Cb_code);
+Cr_code = convertStringsToChars(Cr_code);
 %koniec zakodovanie pomocou klucov do vystupneho vektoru
 end
 
-function ret_data = make_invHuffman(data)
+function [Y, Cb, Cr] = make_invHuffman(Y_code, Cb_code, Cr_code, tree_Y,tree_Cb, tree_Cr)
+Y = [];
+Cb = [];
+Cr = [];
+uzol = tree_Y;
+for i=1:1:strlength(Y_code) 
+    value = str2double(Y_code(i));
+    if value == 1
+            if size(uzol{1,1}) == 1
+                Y = [Y,uzol{1,1}];
+                uzol = tree_Y;
+            else
+                uzol = uzol{1,1};  
+            end
+        else
+            if size(uzol{1,2}) == 1
+                Y = [Y,uzol{1,2}];
+                uzol = tree_Y;
+            else
+                uzol = uzol{1,2};  
+            end 
+    end
+end
+
+uzol = tree_Cb;
+for i=1:1:strlength(Cb_code) 
+    value = str2double(Cb_code(i));
+    if value == 1
+            if size(uzol{1,1}) == 1
+                Cb = [Cb,uzol{1,1}];
+                uzol = tree_Cb;
+            else
+                uzol = uzol{1,1};  
+            end
+        else
+            if size(uzol{1,2}) == 1
+                Cb = [Cb,uzol{1,2}];
+                uzol = tree_Cb;
+            else
+                uzol = uzol{1,2};  
+            end 
+    end
+end
+
+uzol = tree_Cr;
+for i=1:1:strlength(Cr_code) 
+    value = str2double(Cr_code(i));
+    if value == 1
+            if size(uzol{1,1}) == 1
+                Cr = [Cr,uzol{1,1}];
+                uzol = tree_Cr;
+            else
+                uzol = uzol{1,1};  
+            end
+        else
+            if size(uzol{1,2}) == 1
+                Cr = [Cr,uzol{1,2}];
+                uzol = tree_Cr;
+            else
+                uzol = uzol{1,2};  
+            end 
+    end
+end
+
 end
 
 %reccursion
 function recursion(table,uzol,sekvence) 
 sekvence1 = sekvence + "1";
-if size(uzol{1,1}) == 1
-table(uzol{1,1}) = sekvence1;
-else
-recursion(table,uzol{1,1},sekvence1);
-end
-sekvence0 = sekvence + "0";
-if size(uzol{1,2}) == 1
-table(uzol{1,2}) = sekvence0;
-else
-recursion(table,uzol{1,2},sekvence0);
-end
+    if size(uzol{1,1}) == 1
+        table(uzol{1,1}) = sekvence1;
+    else
+        recursion(table,uzol{1,1},sekvence1);
+    end
+        sekvence0 = sekvence + "0";
+    if size(uzol{1,2}) == 1
+        table(uzol{1,2}) = sekvence0;
+    else
+        recursion(table,uzol{1,2},sekvence0);
+    end
 end
