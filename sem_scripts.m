@@ -1,16 +1,11 @@
 %test
-%data=[8,8,8,8,8,8,8,8];
-%data2 = make_dct(data)
-%make_idct(data2)
+data=[8,8,8,8,8,8,8,8];
+data2 = make_dct(data)
+make_idct(data2)
 
-data=zeros(8,8);
-for i=1:1:8
-    for j=1:1:8
-        data(i,j) = 8*(i-1) + j;
-    end    
-end
 
-data2 = make_zigzag(data);
+
+%data2 = make_zigzag(data);
 %data2 = make_izigzag(data,8,8);
 
 function ret_dct = make_dct(data)
