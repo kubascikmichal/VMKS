@@ -1,5 +1,8 @@
 clear all;
-data = imread("lena160x160.jpg");
+
+data = imread("lena160x160.jpg","jpeg");
+GetSize("lena160x160.jpg");
+
 [x,y,z] = size(data);
 [Y, Cb, Cr] = make_YCbCr(data);
 [Cb, Cr] = make_compr420(Cb, Cr);
